@@ -25,20 +25,20 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/customers', 'CustomerController@index');
     Route::get('/customers/{customer:idCustomer}', 'CustomerController@getOrders');
 
-    Route::post('/products', 'ProdukController@store');
-    Route::get('/products/{product:idProduk}', 'ProdukController@edit');
-    Route::put('/products/{product:idProduk}', 'ProdukController@update');
-    Route::delete('/products/{product:idProduk}', 'ProdukController@destroy');
+    Route::middleware('isAdmin')->group(function () {
+        Route::post('/products', 'ProdukController@store');
+        Route::get('/products/{product:idProduk}', 'ProdukController@edit');
+        Route::put('/products/{product:idProduk}', 'ProdukController@update');
+        Route::delete('/products/{product:idProduk}', 'ProdukController@destroy');
 
-    Route::get('/categories', 'KategoriController@index');
-    Route::post('/categories', 'KategoriController@store');
-    Route::get('/categories/{kategori:idKategori}', 'KategoriController@edit');
-    Route::put('/categories/{kategori:idKategori}', 'KategoriController@update');
-    Route::delete('/categories/{kategori:idKategori}', 'KategoriController@destroy');
-
+        Route::get('/categories', 'KategoriController@index');
+        Route::post('/categories', 'KategoriController@store');
+        Route::get('/categories/{kategori:idKategori}', 'KategoriController@edit');
+        Route::put('/categories/{kategori:idKategori}', 'KategoriController@update');
+        Route::delete('/categories/{kategori:idKategori}', 'KategoriController@destroy');
+    });
 
     Route::post('/orders', 'OrderController@store');
-
     Route::post('/order_details', 'OrderDetailController@store');
 });
 
