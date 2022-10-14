@@ -69,18 +69,26 @@ export default {
   },
   methods: {
     async handleSubmit() {
+
       try {
-        await axios.get('/sanctum/csrf-cookie')
-        const response = await axios.post('/register', this.formData)
-        if (response.data.status) {
+
+        const res = await fetch(base('/register'), {
+          method: 'POST',
+          body: JSON.stringify(this.formData),
+          ...fetchConf
+        })
+        const data = await res.json()
+
+        if (data.status) {
           this.$router.push({ name: 'login' })
         } else {
-          this.message = response.data.message
+          this.message = data.message
         }
+        
       } catch (err) {
         console.error(err)
-        this.message = err.response.data.message
       }
+
     },
   }
 }

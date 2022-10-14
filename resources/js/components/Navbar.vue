@@ -49,33 +49,47 @@ export default {
     const authUser = ref(null);
 
     const checkAuth = async () => {
+
       try {
-        const response = await axios.get("/checkAuth");
-        if (response.data.status) {
+        const res = await fetch(base('/checkAuth'), {
+          method: 'GET',
+          ...fetchConf
+        })
+        const data = await res.json()
+        if (data.status) {
           isLogin.value = true;
-          authUser.value = response.data.data;
+          authUser.value = data.data;
         } else {
           isLogin.value = false;
           authUser.value = null;
         }
       } catch (err) {
-        console.error(err);
+        console.error(err)
       }
+
     };
 
     const handleLogout = async () => {
+
       if (confirm("Apakah anda yakin ingin Log Out?")) {
         try {
-          await axios.get("/sanctum/csrf-cookie");
-          const response = await axios.post("/logout");
-          if (response.data.status) {
+  
+          const res = await fetch(base('/logout'), {
+            method: 'POST',
+            ...fetchConf
+          })
+          const data = await res.json()
+  
+          if (data.status) {
             localStorage.clear();
             location.reload();
           }
+          
         } catch (err) {
-          console.error(err);
+          console.error(err)
         }
       }
+
     }
 
     checkAuth();

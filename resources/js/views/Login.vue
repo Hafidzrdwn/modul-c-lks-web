@@ -48,20 +48,30 @@ export default {
   },
   methods: {
     async handleLogin() {
+
       try {
-        const response = await axios.post('/login', this.formData)
-        if (response.data.status) {
-          localStorage.setItem('token', response.data.token)
-          localStorage.setItem("RlUsFcekR", response.data.user.role);
-          localStorage.setItem("fakeCstm", JSON.stringify({ id: response.data.user.idCustomer , name: response.data.user.nama }));
-          const routeName = (response.data.user.role) ? 'admin' : 'home'
+        const res = await fetch(base('/login'), {
+          method: 'POST',
+          body: JSON.stringify(this.formData),
+          ...fetchConf
+        })
+        const data = await res.json()
+        if (data.status) {
+          localStorage.setItem('token', data.token)
+          localStorage.setItem("RlUsFcekR", data.user.role);
+          localStorage.setItem("fakeCstm", JSON.stringify({ id: data.user.idCustomer , name: data.user.nama }));
+          const routeName = (data.user.role) ? 'admin' : 'home'
+          // redirect route
           this.$router.push({ name: routeName })
         } else {
-          this.message = response.data.message
+          this.message = data.message
+          this.formData = {
+            email: '',
+            password: ''
+          }
         }
-      } catch (error) {
-        console.error(error)
-        this.message = error.response.data.message
+      } catch (err) {
+        console.error(err)
       }
     }
   }

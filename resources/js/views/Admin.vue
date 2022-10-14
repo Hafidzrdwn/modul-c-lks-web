@@ -221,8 +221,14 @@ export default {
       methodSubmit.value = "edit"
       headerName.value = "Edit Category"
       modalShow.value = true
-      const response = await axios.get(`/categories/${id}`)
-      formDataKategori.value.namaKategori = response.data.data.namaKategori
+
+      const res = await fetch(base(`/categories/${id}`), {
+        method: 'GET',
+        ...fetchConf
+      })
+      const data = await res.json()
+
+      formDataKategori.value.namaKategori = data.data.namaKategori
       formData.value = formDataKategori.value
       attrId.value = id
     }
@@ -234,39 +240,66 @@ export default {
       methodSubmit.value = "edit"
       headerName.value = "Edit Product"
       modalShow.value = true
-      const response = await axios.get(`/products/${id}`)
-      formDataProduk.value = response.data.data
-      formDataProduk.value.hargaProduk = Math.trunc(response.data.data.hargaProduk)
+
+      const res = await fetch(base(`/products/${id}`), {
+        method: 'GET',
+        ...fetchConf
+      })
+      const data = await res.json()
+
+      formDataProduk.value = data.data
+      formDataProduk.value.hargaProduk = Math.trunc(data.data.hargaProduk)
       formData.value = formDataProduk.value
       attrId.value = id
     }
 
-    const getProducts = () => {
-      axios.get('/products')
-        .then(response => {
-          products.value = response.data.data
+    const getProducts = async () => {
+      loading.value = true
+      try {
+
+        const res = await fetch(base('/products'), {
+          method: 'GET',
+          ...fetchConf
         })
-        .catch(error => {
-          console.log(error)
-        })
-        .finally(() => loading.value = false)
+        const data = await res.json()
+        if (data.status) {
+          loading.value = false
+          products.value = data.data
+        }
+        
+      } catch (err) {
+        console.error(err)
+      }
+
     }
 
-    const getCategories = () => {
+    const getCategories = async () => {
       formDataKategori.value.namaKategori = ''
-      axios.get('/categories')
-        .then(response => {
-          categories.value = response.data.data
-        })
-        .catch(error => {
-          console.log(error)
-        })
-        .finally(() => loading.value = false)
+      loading.value = true
+
+      try {
+
+        const res = await fetch(base('/categories', {
+          method: 'GET',
+          ...fetchConf
+        }))
+        const data = await res.json()
+        if (data.status) {
+          loading.value = false
+          categories.value = data.data
+        }
+        
+      } catch (err) {
+        console.error(err)
+      }
+
     }
 
     const handleSubmitForm = async (dt) => {
         loading.value = true
         let response = null
+        let mtd = (methodSubmit.value === "add") ? 'POST' : 'PUT'
+        let url = null
       
         if (modalProduk.value) {
           for (let key in dt) { 
@@ -276,30 +309,42 @@ export default {
               return
             }
           }
-        
-          response = (methodSubmit.value == "add") ? await axios.post('/products', dt) : await axios.put(`/products/${attrId.value}`, dt)
-        } else {
-          response = (methodSubmit.value == "add") ? await axios.post('/categories', dt) : await axios.post(`/categories/${attrId.value}`, {
-            _method: "PUT",
-            namaKategori: dt.namaKategori
+
+          url = (methodSubmit.value === "add") ? '/products' : `/products/${attrId.value}`
+          response = await fetch(base(url), {
+            method: mtd,
+            body: JSON.stringify(dt),
+            ...fetchConf
           })
+        } else {
+
+          url = (methodSubmit.value === "add") ? '/categories' : `/categories/${attrId.value}`
+          const body = (methodSubmit.value === "add") ? dt : { namaKategori: dt.namaKategori }
+          response = await fetch (base(url), {
+            method: mtd,
+            body: JSON.stringify(body),
+            ...fetchConf
+          })
+
         }    
 
-        if (response.data.status) {
+        const result = await response.json()
+
+        if (result.status) {
           modalShow.value = false
           resetForm()
 
-          if (response.data.type == "category") {
+          if (result.type == "category") {
             getCategories()
           } else {
             getProducts()
           }
         } else {
           loading.value = false
-          if (response.data.type == "category") {
-            categoryError.value = response.data.errors.namaKategori[0]
+          if (result.type == "category") {
+            categoryError.value = result.errors.namaKategori[0]
           } else {
-            productError.value = response.data.errors.idProduk[0];
+            productError.value = result.errors.idProduk[0];
           }
         }
     }
@@ -308,10 +353,19 @@ export default {
       const kategori = categories.value.find(category => category.idKategori === id)
       if (confirm(`Apakah anda yakin ingin menghapus kategori ${kategori.namaKategori}?`)) {
         loading.value = true
-        await axios.post(`/categories/${id}`, {
-          _method: 'DELETE'
-        })
-        getCategories()
+
+        try {
+
+          await fetch(base(`/categories/${id}`), {
+            method: 'DELETE',
+            ...fetchConf
+          })
+          getCategories()
+
+        } catch (err) {
+          console.error(err)
+        }
+
       }
     }
 
@@ -319,11 +373,19 @@ export default {
       const product = products.value.find(product => product.idProduk === id)
       if (confirm(`Apakah anda yakin ingin menghapus produk ${product.namaProduk}?`)) {
         loading.value = true
-        await axios.post(`/products/${id}`, {
-          _method: 'DELETE'
-        })
 
-        getProducts()
+        try {
+
+          await fetch(base(`/products/${id}`), {
+            method: 'DELETE',
+            ...fetchConf
+          })
+          getProducts()
+          
+        } catch (err) {
+          console.error(err)
+        }
+
       }
     }
 

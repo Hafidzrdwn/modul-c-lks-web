@@ -12,14 +12,22 @@ import 'bootstrap';
 import axios from 'axios';
 window.axios = axios;
 
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
-axios.defaults.headers['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
-axios.defaults.headers['Content-Type'] = 'application/json';
-axios.defaults.headers['Accept'] = 'application/json';
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-window.axios.defaults.withCredentials = true
+window.fetchConf = {
+  headers: new Headers({
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem('token')}`,
+    "X-CSRF-TOKEN": document.querySelector('#csrf').content,
+    common: {
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  }),
+  credentials: 'same-origin',  
+}
 
-
+window.base = (url) => {
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`
+} 
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

@@ -15,7 +15,7 @@
             <ul class="p-0" v-if="orders.length > 0">
               
                   <li style="border:2px solid gray; margin:5px;" class="p-4 mb-3" v-for="order in orders" :key="order.idOrder">
-                    <h1>{{ order.orderDate }} - {{ order.kirim.namaPaket }} : {{ Math.trunc(order.kirim.hargaPaket) }}</h1>
+                    <h1>{{ order.orderDate }} - {{ order.kirim.namaPaket }} : Rp. {{ String(Math.trunc(order.kirim.hargaPaket)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') }}</h1>
                     <h3>Order detail</h3> 
                     <div class="table-responsive">          
                       <table class="table">
@@ -79,9 +79,20 @@ export default {
   methods: {
     async getOrders() {
       const id = JSON.parse(localStorage.getItem('fakeCstm')).id
-      const res = await axios.get(`/customers/${id}`)
-      this.orders = res.data.data
-      console.log(res.data.data)
+
+      try {
+
+        const res = await fetch(base(`/customers/${id}`), {
+          method: 'GET',
+          ...fetchConf
+        })
+        const { data } = await res.json()
+        this.orders = data
+        
+      } catch (err) {
+        console.error(err)
+      }
+
     }
   }
 }

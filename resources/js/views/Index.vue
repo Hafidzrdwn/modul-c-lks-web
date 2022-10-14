@@ -123,26 +123,42 @@ export default {
     },
     methods: {
         async getKirims() {
+
             try {
-                const res = await axios.get('/kirims')
-                this.kirims = res.data.data
-            } catch (error) {
-                console.log(error)
+
+                const res = await fetch(base('/kirims'), {
+                    method: 'GET',
+                    ...fetchConf
+                })
+                const {data} = await res.json()
+                this.kirims = data
+                
+            } catch (err) {
+                console.error(err)
             }
+
         },
-        async getProducts () {
+        async getProducts() {
+
             try {
-                const res = await axios.get('products');
-                this.products = res.data.data;
+
+                const res = await fetch(base('/products'), {
+                    method: 'GET',
+                    ...fetchConf
+                })
+                const { data } = await res.json()
+                this.products = data
                 this.products = this.products.map(product => {
                     product.totHargaProduk = 0;
                     product.totHargaProdukFormatted = '0';
                     product.qtyProduk = 0;
                     return product;
                 });
-            } catch (error) {
-                console.error(error);
+
+            } catch (err) {
+                console.error(err)
             }
+
         },
         multiply(event, price, idProduk){
             let tot = event.target.value * Math.trunc(price);         
@@ -177,46 +193,57 @@ export default {
                     this.carts.push(product)
                 }
             })
-            
-            if(this.carts.length > 0){
-                this.showModal = true
+
+            if (localStorage.getItem('RlUsFcekR')) {
+                alert('Role anda adalah admin, anda tidak bisa membeli barang!!')
             } else {
-                alert("Anda belum memilih product!!")
+                if(this.carts.length > 0){
+                    this.showModal = true
+                } else {
+                    alert("Anda belum memilih product!!")
+                }
             }
+            
         },
-        async handlePayOrder(data, paket) {
+        async handlePayOrder(_data, paket) {
             if (!localStorage.getItem('token')) {
                 this.$router.push('login')
             } else {
-                if (data.length > 0) {
+                if (_data.length > 0) {
 
                     // insert order and order detail
                     const idKirim = this.kirims.filter(kirim => kirim.hargaPaket == paket)[0].idKirim;
                     let d = new Date();
                     let datestring = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
                     try {
-                        const res = await axios.post('/orders',
-                            {
+                        const res = await fetch(base('/orders'), {
+                            method: 'POST',
+                            body: JSON.stringify({
                                 orderDate: datestring,
                                 idCustomer: JSON.parse(localStorage.getItem('fakeCstm')).id,
                                 idKirim: idKirim
-                            })
+                            }),
+                            ...fetchConf
+                        });
+                        const {data} = await res.json()
 
-                        const dt = data.map(dt => {
+                        const dt = _data.map(dt => {
                             return {
                                 jumlahBarang: dt.qtyProduk,
                                 totalHarga: dt.totHargaProduk,
-                                idOrder: res.data.data.idOrder,
+                                idOrder: data.idOrder,
                                 idProduk: dt.idProduk
                             }
                         })
 
-                        console.log(dt)
-                        const _res = await axios.post('/order_details', dt)
-                        console.log(_res)
+                        await fetch(base('/order_details'), {
+                            method: 'POST',
+                            body: JSON.stringify(dt),
+                            ...fetchConf
+                        })
 
-                    } catch (error) {
-                        console.log(error)
+                    } catch (err) {
+                        console.error(err)
                     }
 
                     this.showModal = false
